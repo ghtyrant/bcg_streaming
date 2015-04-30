@@ -28,7 +28,7 @@ def get_live_stream(channel):
     return m3u8_obj
 
 def print_video_urls(m3u8_obj):
-    print("Video URLs (sorted by quality):") 
+#    print("Video URLs (sorted by quality):")
     for p in m3u8_obj.playlists:
         si = p.stream_info
         bandwidth = si.bandwidth/(1024)
@@ -37,9 +37,10 @@ def print_video_urls(m3u8_obj):
         uri = p.uri
         #print(p.stream_info, p.media, p.uri[1])
         txt = "\n{} kbit/s ({}), resolution={}".format(bandwidth, quality, resolution)
-        print(txt)
-        print(len(txt)*"-")
+#        print(txt)
+#        print(len(txt)*"-")
         print(uri)
+        return
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser('get video url of twitch channel')
