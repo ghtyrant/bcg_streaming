@@ -3,6 +3,9 @@ import Pyro4
 
 
 class StreamSlaveControl:
+    def __init__(self):
+        self.testing = "Parameter"
+
     def get_info(self):
         return "This is just a test!"
 

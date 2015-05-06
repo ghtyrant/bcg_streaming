@@ -4,7 +4,7 @@ app.factory('slaveService', function($http) {
    return {
         getSlaves: function() {
              //return the promise directly.
-             return $http.get('/json/slaves')
+             return $http.get('/api/slaves')
                        .then(function(result) {
                             //resolve the promise as the data
                             return result.data;
