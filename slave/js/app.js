@@ -9,6 +9,14 @@ app.factory('slaveService', function($http) {
                             //resolve the promise as the data
                             return result.data;
                         });
+        },
+        getStatus: function() {
+             //return the promise directly.
+             return $http.get('/api/status')
+                       .then(function(result) {
+                            //resolve the promise as the data
+                            return result.data;
+                        });
         }
    }
 });
@@ -28,6 +36,26 @@ app.controller('SlaveListCtrl', function($scope, $timeout, slaveService) {
     };
 
   $scope.getSlaves();
+  // Kick off the interval
+  $scope.intervalFunction();
+
+});
+
+app.controller('StatusCtrl', function($scope, $timeout, slaveService) {
+    $scope.getStatus = function(){
+        slaveService.getStatus().then(function(status) {
+            $scope.status = status;
+        });
+    };
+    // Function to replicate setInterval using $timeout service.
+    $scope.intervalFunction = function(){
+        $timeout(function() {
+            $scope.getStatus();
+            $scope.intervalFunction();
+        }, 5000)
+    };
+
+  $scope.getStatus();
   // Kick off the interval
   $scope.intervalFunction();
 

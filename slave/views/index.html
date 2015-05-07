@@ -43,15 +43,31 @@
       </div>
     </nav>
 
-    <div class="container">
+    <div class="container" ng-controller="StatusCtrl">
+        <h1>General status 
+            <span class="label label-success" ng-if="status.status == 1">Online!</span>
+            <span class="label label-danger" ng-if="status.status == 0">Offline!</span>
+        </h1>
+        
+        <div class="alert alert-danger" ng-if="status.message != ''">{{ status.message }}</div>
+        <ul>
+            <li>Connected slaves: <b>{{ status.num_slaves }}</b></li>
+            <li>Load: <b>{{ status.load }} %</b></li>
+            <li>Traffic: <b>{{ status.traffic[0] / 1024 / 1024 | number:2 }}</b> Mb <i class="glyphicon glyphicon-download"></i>
+                         <b>{{ status.traffic[1] / 1024 / 1024 | number:2 }}</b> Mb <i class="glyphicon glyphicon-upload"></i>
+            </li>
+        </ul>
 
-        <h1>Connected Slaves</h1>
+        <h2>Connected Slaves</h2>
 
         <table class="table table-striped" id="cnt1" ng-controller="SlaveListCtrl">
             <thead>
                 <tr>
                     <th>#</th>
                     <th>Name</th>
+                    <th>Address</th>
+                    <th>Load %</th>
+                    <th>Memory free %</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -59,6 +75,9 @@
                 <tr ng-repeat="slave in slaves">
                     <td>{{ $index }}</td>
                     <td>{{ slave.name }}</td>
+                    <td>{{ slave.address }}</td>
+                    <td>{{ slave.system_status.load }}</td>
+                    <td>{{ slave.system_status.mem_free }}</td>
                     <td>{{ slave.status }}</td>
                 </tr>
             </tbody>

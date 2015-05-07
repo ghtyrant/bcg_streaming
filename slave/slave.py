@@ -1,6 +1,7 @@
 import sys
 import Pyro4
-
+import os
+import psutil
 
 class StreamSlaveControl:
     def __init__(self):
@@ -8,6 +9,13 @@ class StreamSlaveControl:
 
     def get_info(self):
         return "This is just a test!"
+
+    def get_system_status(self):
+        return {
+            "load": psutil.cpu_percent(),
+            "mem_free": psutil.virtual_memory().percent,
+        }
+
 
 
 def generate_free_name(ns):

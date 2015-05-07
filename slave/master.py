@@ -1,6 +1,8 @@
 import Pyro4
 import bottle
 import functools
+import logging
+import socket
 
 from api import apiApp
 from slavemanager import SlaveManager
@@ -13,12 +15,6 @@ template = functools.partial(bottle.template, template_adapter=MyAdapter)
 STATIC_VIEWS_DIR = "views"
 STATIC_LIBS_DIR = "js"
 STATIC_STYLES_DIR = "css"
-
-SLAVES = {}
-
-
-def fetch_slaves(ns):
-    pass
 
 app = bottle.Bottle()
 
@@ -41,9 +37,18 @@ def staticCSSGet(filepath):
 
 
 if __name__ == "__main__":
+    logger = logging.getLogger("")
+    logger.setLevel(logging.DEBUG)
+    print("HEEEREEEE")
     slavemanager = SlaveManager()
 
     bottle.debug(True)
     apiApp.slavemanager = slavemanager
     app.mount("/api/", apiApp)
-    app.run(host="localhost", port=8080, reloader=True)
+    try:
+        app.run(host="localhost", port=8080, reloader=False)
+    except socket.error:
+        logger.exception("Error starting bottle server:")
+
+    print("Stopping slavemanager ...")
+    slavemanager.stop()
