@@ -1,21 +1,90 @@
 import sys
 import Pyro4
-import os
 import psutil
+import multiprocessing
+import time
+
+import generated_vlc as vlc
+
+def stream_player_error(player, *args, **kwargs):
+    print(args)
+    print(kwargs)
+    player.stop()
+
+def stream_player_process(pipe, stream_url):
+    instance = vlc.Instance()
+    try:
+        media = instance.media_new(stream_url)
+    except NameError:
+        print('NameError: %s (%s vs LibVLC %s)' % (sys.exc_info()[1],
+                                                   vlc.__version__,
+                                                   vlc.libvlc_get_version()))
+        return
+
+    player = instance.media_player_new()
+
+    event_manager = player.event_manager()
+    event_manager.event_attach(vlc.EventType.MediaPlayerEncounteredError, stream_player_error, player)
+
+    player.set_media(media)
+    player.play()
+    player.set_fullscreen(True)
+
+    # Give VLC a bit to start playing the stream
+    time.sleep(3)
+
+    while True:
+        cmd = ""
+        if pipe.poll(1):
+            cmd = pipe.recv()
+            if cmd == "stop":
+                break
+
+        if not player.is_playing() or not player.has_vout():
+            break
+
+        time.sleep(1)
+
+    pipe.close()
+
 
 class StreamSlaveControl:
     def __init__(self):
-        self.testing = "Parameter"
-
-    def get_info(self):
-        return "This is just a test!"
+        self.stream_player = None
+        self.stream_player_pipe = None
+        self.stream_url = None
 
     def get_system_status(self):
         return {
             "load": psutil.cpu_percent(),
-            "mem_free": psutil.virtual_memory().percent,
+            "mem_used": psutil.virtual_memory().percent,
         }
 
+    def start_stream(self, stream_url):
+        if self.stream_player:
+            if self.stream_player.is_alive():
+                self.stop_stream()
+            else:
+                self.stream_player_pipe.close()
+
+        self.stream_url = stream_url
+        (self.stream_player_pipe, process_pipe) = multiprocessing.Pipe(duplex=True)
+        self.stream_player = multiprocessing.Process(target=stream_player_process, args=(process_pipe, stream_url))
+        self.stream_player.start()
+
+    def stop_stream(self):
+        if self.stream_player_pipe:
+            self.stream_player_pipe.send("stop")
+            self.stream_player_pipe.close()
+
+    def get_status(self):
+        if not self.stream_player:
+            return 'Idle'
+
+        if self.stream_player.is_alive():
+            return 'Playing stream'
+        else:
+            return 'Stream stopped'
 
 
 def generate_free_name(ns):

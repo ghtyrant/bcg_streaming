@@ -52,11 +52,22 @@ app.controller('StatusCtrl', function($scope, $timeout, slaveService) {
         $timeout(function() {
             $scope.getStatus();
             $scope.intervalFunction();
-        }, 5000)
+        }, 3000)
     };
 
   $scope.getStatus();
   // Kick off the interval
   $scope.intervalFunction();
+});
 
+app.controller('StreamCtrl', function($scope, $http) {
+    $scope.url = '';
+
+    $scope.start_stream = function() {
+        $http.post('/api/start-stream', { url: $scope.url }).success(function(data) { alert(data.message); });
+    };
+
+    $scope.stop_stream = function() {
+        $http.post('/api/stop-stream', { }).success(function(data) { alert(data.message); });
+    };
 });

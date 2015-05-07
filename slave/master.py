@@ -37,9 +37,9 @@ def staticCSSGet(filepath):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=logging.DEBUG)
     logger = logging.getLogger("")
-    logger.setLevel(logging.DEBUG)
-    print("HEEEREEEE")
+
     slavemanager = SlaveManager()
 
     bottle.debug(True)
