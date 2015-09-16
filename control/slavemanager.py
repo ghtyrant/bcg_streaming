@@ -2,11 +2,15 @@ import Pyro4
 import threading
 import time
 import logging
+import psutil
+import base64
+from PIL import Image
 
 
 class SlaveManager:
     STATUS_OFFLINE = 0
     STATUS_ONLINE = 1
+
     def __init__(self):
         self.nameserver = Pyro4.locateNS()
         self.slaves = {}
@@ -18,10 +22,36 @@ class SlaveManager:
         self.update_thread = threading.Thread(target=self.thread_update_slaves)
         self.update_thread.start()
 
+        self.bytes_sent = 0
+        self.bytes_received = 0
+        self.speed_up = 0
+        self.speed_down = 0
+        self.traffic_last_check = 0
+
     def thread_update_slaves(self):
         while not self.stopped:
             self.update_slaves()
+            traffic = psutil.net_io_counters()
+            self.set_traffic(traffic.bytes_sent, traffic.bytes_recv)
+
+            for name, slave in self.slaves.iteritems():
+                self.fetch_slave_screenshot(name)
+
             time.sleep(5)
+
+    def get_slave_by_name(self, name):
+        return self.slaves.get(name, None)
+
+    def get_all_slaves(self):
+        return self.slaves.items()
+
+    def fetch_slave_screenshot(self, slave_name):
+        slave = self.slaves[slave_name]
+        img_data = slave.get_screenshot()
+        img_data['data'] = base64.b64decode(img_data['data'])
+        img = Image.frombytes(**img_data)
+        img_file = open("screens/%s.jpg" % slave_name, "wb")
+        img.save(img_file, 'JPEG', quality=70)
 
     def set_status(self, status, msg=""):
         self.status = status
@@ -29,6 +59,20 @@ class SlaveManager:
 
     def stop(self):
         self.stopped = True
+
+    def set_traffic(self, sent, received):
+        self.speed_up = (sent - self.bytes_sent) / (time.time() - self.traffic_last_check)
+        self.speed_down = (received - self.bytes_received) / (time.time() - self.traffic_last_check)
+        self.bytes_sent = sent
+        self.bytes_received = received
+
+        self.traffic_last_check = time.time()
+
+    def get_traffic_speed(self):
+        return (self.speed_up, self.speed_down)
+
+    def get_traffic_total(self):
+        return (self.bytes_sent, self.bytes_received)
 
     def update_slaves(self):
         try:

@@ -1,6 +1,6 @@
+import sys
 import requests
 import json
-import re
 import argparse
 import random
 import m3u8
@@ -28,19 +28,17 @@ def get_live_stream(channel):
     return m3u8_obj
 
 def print_video_urls(m3u8_obj):
-#    print("Video URLs (sorted by quality):")
+    if not m3u8_obj.playlists:
+        sys.exit(-1)
+
     for p in m3u8_obj.playlists:
         si = p.stream_info
         bandwidth = si.bandwidth/(1024)
         quality = p.media[0].name
         resolution = si.resolution if si.resolution else "?"
         uri = p.uri
-        #print(p.stream_info, p.media, p.uri[1])
-        txt = "\n{} kbit/s ({}), resolution={}".format(bandwidth, quality, resolution)
-#        print(txt)
-#        print(len(txt)*"-")
         print(uri)
-        return
+        sys.exit(0)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser('get video url of twitch channel')

@@ -1,8 +1,11 @@
+import Tkinter
 import sys
 import Pyro4
 import psutil
 import multiprocessing
 import time
+import pyscreenshot
+import base64
 
 import generated_vlc as vlc
 
@@ -76,6 +79,11 @@ class StreamSlaveControl:
         if self.stream_player_pipe:
             self.stream_player_pipe.send("stop")
             self.stream_player_pipe.close()
+
+    def get_screenshot(self):
+        img = pyscreenshot.grab()
+        img.thumbnail((200, 200))
+        return {"data": base64.b64encode(img.tobytes()), "size": img.size, "mode": img.mode}
 
     def get_status(self):
         if not self.stream_player:

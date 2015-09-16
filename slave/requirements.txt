@@ -1,4 +1,4 @@
-Pyro4==4.35
-bottle==0.12.8
-psutil==2.2.1
-serpent==1.10
+Pyro4==4.39
+psutil==3.2.1
+serpent==1.11
+wsgiref==0.1.2

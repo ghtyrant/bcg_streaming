@@ -15,6 +15,7 @@ template = functools.partial(bottle.template, template_adapter=MyAdapter)
 STATIC_VIEWS_DIR = "views"
 STATIC_LIBS_DIR = "js"
 STATIC_STYLES_DIR = "css"
+STATIC_SCREENS_DIR = "screens"
 
 app = bottle.Bottle()
 
@@ -34,6 +35,11 @@ def staticJSGet(filepath):
 @app.route('/css/<filepath:path>')
 def staticCSSGet(filepath):
     return bottle.static_file(filepath, root=STATIC_STYLES_DIR)
+
+
+@app.route('/screens/<slave_name>')
+def staticScreenGet(slave_name):
+    return bottle.static_file("%s.jpg" % (slave_name), root=STATIC_SCREENS_DIR)
 
 
 if __name__ == "__main__":
