@@ -1,0 +1,1 @@
+- Pyro4 Nameserver persistent starten mit sqlite und fixem Host (funktioniert sonst nicht im LAN)

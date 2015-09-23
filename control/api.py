@@ -71,7 +71,7 @@ def stop_stream():
     for slave in slaves:
         slave.stop_stream()
 
-    return { 'message': 'Stoping streams!' }
+    return { 'message': 'Stopping streams!' }
 
 @apiApp.post('/display-image')
 def display_image():

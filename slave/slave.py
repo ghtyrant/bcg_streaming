@@ -6,17 +6,57 @@ import multiprocessing
 import time
 import pyscreenshot
 import base64
+import ctypes
+import logging
+from functools import partial
 
 import generated_vlc as vlc
 
-def stream_player_error(player, *args, **kwargs):
-    print(args)
-    print(kwargs)
-    player.stop()
+
+def bytes_to_str(b):
+    if isinstance(b, str):
+        return unicode(b, sys.getfilesystemencoding())
+    else:
+        return b
+
+def mspf(player):
+    """Milliseconds per frame."""
+    return int(1000 // (player.get_fps() or 25))
+
+def stream_player_error(event, player):
+    print(event)
+
+    media = player.get_media()
+    print('State: %s' % player.get_state())
+    print('Media: %s' % bytes_to_str(media.get_mrl()))
+    print('Track: %s/%s' % (player.video_get_track(), player.video_get_track_count()))
+    print('Current time: %s/%s' % (player.get_time(), media.get_duration()))
+    print('Position: %s' % player.get_position())
+    print('FPS: %s (%d ms)' % (player.get_fps(), mspf(player)))
+    print('Rate: %s' % player.get_rate())
+    print('Video size: %s' % str(player.video_get_size(0)))  # num=0
+    print('Scale: %s' % player.video_get_scale())
+    print('Aspect ratio: %s' % player.video_get_aspect_ratio())
+    #print('Window:' % player.get_hwnd()
+
+    #player.stop()
+
+
+class VLCLogHandler:
+    libc = ctypes.CDLL("libc.so.6")
+
+    @vlc.CallbackDecorators.LogCb
+    def log_handler(instance, log_level, log, fmt, va_list):
+        bufferString = ctypes.create_string_buffer(4096)
+        VLCLogHandler.libc.vsprintf(bufferString, fmt, ctypes.cast(va_list, ctypes.c_void_p))
+        logging.warn(bufferString.raw)
+
 
 def stream_player_process(pipe, stream_url):
     instance = vlc.Instance()
+
     try:
+        # Create new media from stream URL
         media = instance.media_new(stream_url)
     except NameError:
         print('NameError: %s (%s vs LibVLC %s)' % (sys.exc_info()[1],
@@ -26,11 +66,24 @@ def stream_player_process(pipe, stream_url):
 
     player = instance.media_player_new()
 
+    instance.log_set(VLCLogHandler.log_handler, player)
+
     event_manager = player.event_manager()
     event_manager.event_attach(vlc.EventType.MediaPlayerEncounteredError, stream_player_error, player)
 
     player.set_media(media)
-    player.play()
+
+    # To play YouTube stream URLs (besides everything else)
+    # we have to create a media_list and a media_list_player
+    # Otherwise libvlc won't resolve a YT URL to a real stream URL
+    media_list = instance.media_list_new([media])
+
+    list_player = instance.media_list_player_new()
+    list_player.set_media_player(player)
+    list_player.set_media_list(media_list)
+
+    list_player.play()
+
     player.set_fullscreen(True)
 
     # Give VLC a bit to start playing the stream
@@ -43,10 +96,15 @@ def stream_player_process(pipe, stream_url):
             if cmd == "stop":
                 break
 
-        if not player.is_playing() or not player.has_vout():
+        if not player.is_playing():
             break
 
         time.sleep(1)
+
+    media.release()
+    media_list.release()
+    list_player.release()
+    player.release()
 
     pipe.close()
 
@@ -111,6 +169,12 @@ def generate_free_name(ns):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) == 2 and sys.argv[1] == "--test":
+        ss = StreamSlaveControl()
+        #ss.start_stream("/home/fabian/20140731-TVGE2110-Monty_Python_live__mostly_.mp4")
+        ss.start_stream("https://youtu.be/ikpc1BN4nN8")
+        sys.exit(0)
+
     daemon = Pyro4.Daemon()
     print("Locating nameserver ...")
     ns = Pyro4.locateNS()

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "Starting Pyro4 nameserver ..."
-pyro4-ns&
+echo "Starting persistent Pyro4 nameserver ..."
+pyro4-ns -d&
 
 echo "Starting Control webserver ..."
 python master.py

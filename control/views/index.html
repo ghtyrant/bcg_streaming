@@ -90,7 +90,7 @@
                           <select class="form-control" data-ng-options="s.name + (s.status != null ? ' [' + s.status + ']' : '') for s in slaves" name="slave" data-ng-model="selectedSlave"></select>
                           <button type="submit" class="btn btn-default">Start streams</button>
                           <hr/>
-                          <button type="submit" ng-click="stop_stream()" class="btn btn-danger">Stop streams</button>
+                          <button ng-click="stop_stream()" class="btn btn-danger">Stop streams</button>
                         </form> 
 
                       </div>

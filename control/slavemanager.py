@@ -43,7 +43,7 @@ class SlaveManager:
         return self.slaves.get(name, None)
 
     def get_all_slaves(self):
-        return self.slaves.items()
+        return self.slaves.values()
 
     def fetch_slave_screenshot(self, slave_name):
         slave = self.slaves[slave_name]
