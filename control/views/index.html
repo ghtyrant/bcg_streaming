@@ -1,156 +1,170 @@
 <!DOCTYPE html>
 <html lang="en" ng-app="streamApp">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <title>BCG Streaming Platform</title>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+        <title>BCG Streaming Platform</title>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
-    <script src="js/ui-bootstrap-tpls-0.13.4.min.js"></script>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/css/style.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+        <script src="js/ui-bootstrap-tpls-0.13.4.min.js"></script>
+        <script src="js/ng-websocket.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+        <link rel="stylesheet" href="/css/style.css">
 
-    <script src="/js/app.js"></script>
+        <script src="/js/app.js"></script>
 
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-      <![endif]-->
-  </head>
-  <body>
+        <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+            <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+            <![endif]-->
+    </head>
+    <body>
 
-    <nav class="navbar navbar-inverse navbar-fixed-top">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">BCG Streaming</a>
-        </div>
-        <div id="navbar" class="collapse navbar-collapse">
-          <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#contact">Contact</a></li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-
-
-
-    <div class="container" ng-controller="StatusCtrl">
-      <h1>General status 
-        <span class="label label-success" ng-if="status.status == 1">Online!</span>
-        <span class="label label-danger" ng-if="status.status == 0">Offline!</span>
-      </h1>
-
-      <div class="alert alert-danger" ng-if="status.message != ''">{{ status.message }}</div>
-      <ul>
-        <li>Connected slaves: <b>{{ status.num_slaves }}</b></li>
-        <li>Load: <b>{{ status.load }} %</b></li>
-        <li>Traffic: <b>{{ status.traffic_speed[1] / 1024 / 1024 * 8 | number:2 }}</b> Mbps (<b>{{ status.traffic_total[1] / 1024 / 1024 | number:2 }}</b> Mb) <i class="glyphicon glyphicon-download"></i>
-          <b>{{ status.traffic_speed[0] / 1024 / 1024 * 8 | number:2 }}</b> Mbps (<b>{{ status.traffic_total[0] / 1024 / 1024 | number:2 }}</b> Mb) <i class="glyphicon glyphicon-upload"></i>
-        </li>
-      </ul>
-
-      <h2>Connected Slaves</h2>
-      <div>
-        <div ng-controller="CommandModalCtrl">
-          <script type="text/ng-template" id="command_modal.html">
-            <div class="modal-header">
-              <button type="button" class="close" ng-click="cancel()"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">Issue command ...</h4>
-              </div>
-
-              <div class="modal-body">
-                <div class="panel panel-default">
-                  <div class="panel-heading">
-                    <ul class="nav nav-tabs" role="tablist">
-                      <li role="presentation" class="active"><a href="#stream" aria-controls="stream" role="tab" data-toggle="tab">Stream</a></li>
-                      <li role="presentation"><a href="#image" aria-controls="image" role="tab" data-toggle="tab">Image</a></li>
-                      <li role="presentation"><a href="#video" aria-controls="video" role="tab" data-toggle="tab">Video</a></li>
-                      <li role="presentation"><a href="#system" aria-controls="system" role="tab" data-toggle="tab">System</a></li>
-                    </ul>
-
-                    <div class="panel-body tab-content">
-
-                      <!-- Streams -->
-                      <div role="tabpanel" class="tab-pane active" id="stream">
-                        <p>Control starting and stopping of streams on slaves.</p>
-                        <form ng-submit="start_stream()" ng-controller="StreamCtrl" class="form-inline" style="display: inline">
-                          <input type="text" name="url" class="form-control" ng-model="url"/>
-                          <select class="form-control" data-ng-options="s.name + (s.status != null ? ' [' + s.status + ']' : '') for s in slaves" name="slave" data-ng-model="selectedSlave"></select>
-                          <button type="submit" class="btn btn-default">Start streams</button>
-                          <hr/>
-                          <button ng-click="stop_stream()" class="btn btn-danger">Stop streams</button>
-                        </form> 
-
-                      </div>
-
-                      <!-- Image -->
-                      <div role="tabpanel" class="tab-pane" id="image">
-                        <p>Display fullscreen image on a slave.</p>
-                        <form ng-submit="display_image()" ng-controller="ImageAPICtrl" class="form-inline" style="display: inline">
-                          <input type="text" name="url" class="form-control" ng-model="url"/>
-                          <select class="form-control" data-ng-options="s.name + (s.status != null ? ' [' + s.status + ']' : '') for s in slaves" name="slave" data-ng-model="selectedSlave"></select>
-                          <button type="submit" class="btn btn-default">Display Image</button>
-                          <hr/>
-                          <button type="submit" ng-click="stop_stream()" class="btn btn-danger">Hide Image</button>
-                        </form> 
-
-                      </div>
-
-                      <div role="tabpanel" class="tab-pane" id="video">...</div>
-                      <div role="tabpanel" class="tab-pane" id="system">...</div>
-                    </div>
-                  </div>
+        <nav class="navbar navbar-inverse navbar-fixed-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#">BCG Streaming</a>
                 </div>
-              </div>
-          </script>
+                <div id="navbar" class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav">
+                        <li class="active"><a href="#">Home</a></li>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
 
-          <button type="button" class="btn btn-primary" ng-click="open()">Issue command</button>
+
+
+        <div class="container" ng-controller="StatusCtrl">
+            <div class="row">
+                <div class="col-lg-6">
+                    <h1>General status 
+                        <span class="label label-success" ng-if="status.status == 1">Online!</span>
+                        <span class="label label-danger" ng-if="status.status == 0">Offline!</span>
+                    </h1>
+
+                    <div class="alert alert-danger" ng-if="status.message != ''">{{ status.message }}</div>
+                    <ul>
+                        <li>Connected slaves: <b>{{ status.num_slaves }}</b></li>
+                        <li>Load: <b>{{ status.load }} %</b></li>
+                        <li>Traffic: <b>{{ status.traffic_speed[1] / 1024 / 1024 * 8 | number:2 }}</b> Mbps (<b>{{ status.traffic_total[1] / 1024 / 1024 | number:2 }}</b> Mb) <i class="glyphicon glyphicon-download"></i>
+                            <b>{{ status.traffic_speed[0] / 1024 / 1024 * 8 | number:2 }}</b> Mbps (<b>{{ status.traffic_total[0] / 1024 / 1024 | number:2 }}</b> Mb) <i class="glyphicon glyphicon-upload"></i>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-6" ng-controller="LogCtrl">
+                    <h2>Log</h2>
+                    <textarea class="form-control disabled" rows="6" disabled ng-model="log_messages"></textarea>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <h2>Connected Slaves</h2>
+                    <div>
+                        <div ng-controller="CommandModalCtrl">
+                            <script type="text/ng-template" id="command_modal.html">
+        <div class="modal-header">
+                      <button type="button" class="close" ng-click="cancel()"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">Issue command ...</h4>
+                      </div>
+
+                      <div class="modal-body">
+                        <div class="panel panel-default">
+                          <div class="panel-heading">
+                            <ul class="nav nav-tabs" role="tablist">
+                              <li role="presentation" class="active"><a href="#stream" aria-controls="stream" role="tab" data-toggle="tab">Stream</a></li>
+                              <li role="presentation"><a href="#image" aria-controls="image" role="tab" data-toggle="tab">Image</a></li>
+                              <li role="presentation"><a href="#video" aria-controls="video" role="tab" data-toggle="tab">Video</a></li>
+                              <li role="presentation"><a href="#system" aria-controls="system" role="tab" data-toggle="tab">System</a></li>
+                            </ul>
+
+                            <div class="panel-body tab-content">
+
+                              <!-- Streams -->
+                              <div role="tabpanel" class="tab-pane active" id="stream">
+                                <p>Control starting and stopping of streams on slaves.</p>
+                                <form ng-submit="start_stream()" ng-controller="StreamCtrl" class="form-inline" style="display: inline">
+                                  <input type="text" name="url" class="form-control" ng-model="url"/>
+                                  <select class="form-control" data-ng-options="s.name + (s.status != null ? ' [' + s.status + ']' : '') for s in slaves" name="slave" data-ng-model="selectedSlave"></select>
+                                  <button type="submit" class="btn btn-default">Start streams</button>
+                                  <hr/>
+                                  <button ng-click="stop_stream()" class="btn btn-danger">Stop streams</button>
+                                </form> 
+
+                              </div>
+
+                              <!-- Image -->
+                              <div role="tabpanel" class="tab-pane" id="image">
+                                <p>Display fullscreen image on a slave.</p>
+                                <form ng-submit="display_image()" ng-controller="ImageAPICtrl" class="form-inline" style="display: inline">
+                                  <input type="text" name="url" class="form-control" ng-model="url"/>
+                                  <select class="form-control" data-ng-options="s.name + (s.status != null ? ' [' + s.status + ']' : '') for s in slaves" name="slave" data-ng-model="selectedSlave"></select>
+                                  <button type="submit" class="btn btn-default">Display Image</button>
+                                  <hr/>
+                                  <button type="submit" ng-click="stop_stream()" class="btn btn-danger">Hide Image</button>
+                                </form> 
+
+                              </div>
+
+                              <div role="tabpanel" class="tab-pane" id="video">...</div>
+                              <div role="tabpanel" class="tab-pane" id="system">...</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                            </script>
+
+                            <button type="button" class="btn btn-primary" ng-click="open()">Issue command</button>
+                        </div>
+                    </div>
+
+
+                    <table class="table table-striped" id="cnt1" ng-controller="SlaveListCtrl">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Load %</th>
+                                <th>Memory used %</th>
+                                <th>Status</th>
+                                <th>Screencapture</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="slave in slaves">
+                                <td>{{ $index }}</td>
+                                <td>{{ slave.name }}</td>
+                                <td>{{ slave.address }}</td>
+                                <td>{{ slave.system_status.load }}</td>
+                                <td>{{ slave.system_status.mem_used }}</td>
+                                <td>{{ slave.status }}</td>
+                                <td><img ng-src="screens/{{ slave.name + '?' + cache_bypass }}"></img></td>
+                                <td><button class="btn btn-default" ng-controller="CommandModalCtrl" ng-click="open(slave.name)"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-      </div>
 
-
-      <table class="table table-striped" id="cnt1" ng-controller="SlaveListCtrl">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Name</th>
-            <th>Address</th>
-            <th>Load %</th>
-            <th>Memory used %</th>
-            <th>Status</th>
-            <th>Screencapture</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr ng-repeat="slave in slaves">
-            <td>{{ $index }}</td>
-            <td>{{ slave.name }}</td>
-            <td>{{ slave.address }}</td>
-            <td>{{ slave.system_status.load }}</td>
-            <td>{{ slave.system_status.mem_used }}</td>
-            <td>{{ slave.status }}</td>
-            <td><img ng-src="screens/{{ slave.name + '?' + cache_bypass }}"></img></td>
-            <td><button class="btn btn-default" ng-controller="CommandModalCtrl" ng-click="open(slave.name)"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span></button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-  </body>
+        <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    </body>
 </html>

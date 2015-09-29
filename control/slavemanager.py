@@ -6,7 +6,6 @@ import psutil
 import base64
 from PIL import Image
 
-
 class SlaveManager:
     STATUS_OFFLINE = 0
     STATUS_ONLINE = 1
@@ -83,15 +82,17 @@ class SlaveManager:
             self.slaves = {}
             return
 
-        logging.info("Updating slaves %s ..." % (slaves_addresses))
         for name, address in slaves_addresses.items():
             if name in self.slaves:
                 continue
 
+            logging.info("Discovered new slave %s (@%s) ..." % (name, address))
             self.slaves[name] = Pyro4.Proxy(address)
+            self.slaves[name].name = name
 
         offline_slaves = [x for x in self.slaves.keys() if x not in slaves_addresses.keys()]
         for slave_name in offline_slaves:
+            logging.info("Removing slave %s ..." % (slave_name))
             del self.slaves[slave_name]
 
         self.set_status(SlaveManager.STATUS_ONLINE)

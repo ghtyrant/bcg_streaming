@@ -115,6 +115,14 @@ class StreamSlaveControl:
         self.stream_player_pipe = None
         self.stream_url = None
 
+    @property
+    def name(self):
+        return self.name
+
+    @name.setter
+    def name(self, value):
+        self.name = value
+
     def get_system_status(self):
         return {
             "load": psutil.cpu_percent(),

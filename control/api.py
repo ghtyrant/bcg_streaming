@@ -1,9 +1,11 @@
 import Pyro4
 import bottle
-import json
 import psutil
+import json
+import logging
 
 apiApp = bottle.Bottle()
+apiApp.log_client_mutex = None
 
 @apiApp.route('/slaves')
 def get_slaves():
@@ -55,6 +57,7 @@ def start_stream():
         slaves = [apiApp.slavemanager.get_slave_by_name(slave_name),]
 
     for slave in slaves:
+        logging.info("Starting stream %s on slave %s" % (url, slave))
         slave.start_stream(url)
 
     return { 'message': 'Starting stream!' }
@@ -69,6 +72,7 @@ def stop_stream():
         slaves = [apiApp.slavemanager.get_slave_by_name(slave_name),]
 
     for slave in slaves:
+        logging.info("Stopping streams on slave %s" % (slave.name))
         slave.stop_stream()
 
     return { 'message': 'Stopping streams!' }

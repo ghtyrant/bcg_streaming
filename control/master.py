@@ -3,6 +3,9 @@ import bottle
 import functools
 import logging
 import socket
+import json
+import threading
+from loghandler import LogDispatchHandler, LogDispatchSubscriber
 
 from api import apiApp
 from slavemanager import SlaveManager
@@ -42,17 +45,74 @@ def staticScreenGet(slave_name):
     return bottle.static_file("%s.jpg" % (slave_name), root=STATIC_SCREENS_DIR)
 
 
+class LogDispatchClient:
+    def __init__(self, ws, loghandler):
+        self.ws = ws
+        self.loghandler = loghandler
+
+    def run(self):
+        sub = LogDispatchSubscriber()
+        self.loghandler.subscribe(sub)
+
+        while True:
+            messages = sub.wait()
+
+            if messages is not None:
+                for msg in messages:
+                    self.ws.send(json.dumps({"event": "log", "data": msg}))
+
+            else:
+                break
+
+        self.loghander.unsubscribe(sub)
+
+
+@app.route('/log')
+def log():
+    ws = bottle.request.environ.get('wsgi.websocket')
+    if not ws:
+        bottle.abort(400, 'Expected WebSocket request.')
+
+    client = LogDispatchClient(ws, apiApp.loghandler)
+    client.run()
+
 if __name__ == "__main__":
-    logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=logging.DEBUG)
-    logger = logging.getLogger("")
+    from gevent.pywsgi import WSGIServer
+    from geventwebsocket.handler import WebSocketHandler
+    from gevent import monkey; monkey.patch_all()
+
+    logger = logging.getLogger()
+
+    handler = LogDispatchHandler()
+    handler.setFormatter(logging.Formatter(fmt="[%(levelname)s] %(message)s"))
+
+    logger.addHandler(handler)
+    streamhandler = logging.StreamHandler()
+    streamhandler.setFormatter(logging.Formatter(fmt="[%(asctime)s][%(levelname)s] %(name)s :: %(message)s"))
+    logger.addHandler(streamhandler)
+
+    logger.setLevel(logging.DEBUG)
+
+    logging.getLogger("geventwebsocket.handler").setLevel(logging.WARN)
+
 
     slavemanager = SlaveManager()
 
     bottle.debug(True)
     apiApp.slavemanager = slavemanager
+    apiApp.loghandler = handler
     app.mount("/api/", apiApp)
+
+
+    host = "127.0.0.1"
+    port = 8080
+
+    server = WSGIServer((host, port), app,
+                        handler_class=WebSocketHandler)
+    print "access @ http://%s:%s/websocket.html" % (host,port)
+
     try:
-        app.run(host="localhost", port=8080, reloader=False)
+        server.serve_forever()
     except socket.error:
         logger.exception("Error starting bottle server:")
 
