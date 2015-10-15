@@ -34,7 +34,11 @@ class SlaveManager:
             self.set_traffic(traffic.bytes_sent, traffic.bytes_recv)
 
             for name, slave in self.slaves.iteritems():
-                self.fetch_slave_screenshot(name)
+                try:
+                    self.fetch_slave_screenshot(name)
+                except Pyro4.errors.CommunicationError as e:
+                    logging.exception("Error communicating with slave!")
+                    continue
 
             time.sleep(5)
 
@@ -86,9 +90,13 @@ class SlaveManager:
             if name in self.slaves:
                 continue
 
-            logging.info("Discovered new slave %s (@%s) ..." % (name, address))
-            self.slaves[name] = Pyro4.Proxy(address)
-            self.slaves[name].name = name
+            try:
+                logging.info("Discovered new slave %s (@%s) ..." % (name, address))
+                self.slaves[name] = Pyro4.Proxy(address)
+                self.slaves[name].name = name
+            except Pyro4.errors.CommunicationError as e:
+                logging.exception("Error communicating with slave!")
+                continue
 
         offline_slaves = [x for x in self.slaves.keys() if x not in slaves_addresses.keys()]
         for slave_name in offline_slaves:
