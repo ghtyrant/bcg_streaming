@@ -53,7 +53,7 @@ class VLCLogHandler:
 
 
 def stream_player_process(pipe, stream_url):
-    instance = vlc.Instance()
+    instance = vlc.Instance('--sub-filter "logo{file=logo.png,opacity=40,x=10,y=10}"')
 
     try:
         # Create new media from stream URL
