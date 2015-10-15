@@ -24,4 +24,4 @@ echo
 echo
 echo
 echo "-----------------------------------------------------------------------------------------------"
-ffmpeg -i $STREAM_URL -acodec libvorbis $FFSERVER_IN
+ffmpeg -i $STREAM_URL -c copy -hls_time 20 -hls_wrap 10 /srv/http/stream/out.m3u8
