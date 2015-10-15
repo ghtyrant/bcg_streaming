@@ -37,6 +37,8 @@ def print_video_urls(m3u8_obj):
         quality = p.media[0].name
         resolution = si.resolution if si.resolution else "?"
         uri = p.uri
+        #print(bandwidth)
+        #print(resolution)
         print(uri)
         sys.exit(0)
 

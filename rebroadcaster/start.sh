@@ -1,11 +1,11 @@
 #!/bin/bash
 
+echo "*** Stream Catcher v0.1 ***"
+
 if [[ $# -ne 1 ]]; then
     echo "Usage: $0 <twitch_channel>"
     exit 1
 fi
-
-echo "*** Stream Catcher v0.1 ***"
 
 FFSERVER_IN=http://localhost:8090/feed1.ffm
 echo "Resolving Twitch stream URL ..."
@@ -24,4 +24,7 @@ echo
 echo
 echo
 echo "-----------------------------------------------------------------------------------------------"
-ffmpeg -i $STREAM_URL -acodec libvorbis $FFSERVER_IN
+
+ffserver -f ffserver.conf &
+ffmpeg -i $STREAM_URL -c copy -bsf:a aac_adtstoasc $FFSERVER_IN
+kill $!
