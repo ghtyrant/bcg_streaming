@@ -183,7 +183,7 @@ if __name__ == "__main__":
         ss.start_stream("https://youtu.be/ikpc1BN4nN8")
         sys.exit(0)
 
-    daemon = Pyro4.Daemon()
+    daemon = Pyro4.Daemon("0.0.0.0")
     print("Locating nameserver ...")
     ns = Pyro4.locateNS()
     uri = daemon.register(StreamSlaveControl())
