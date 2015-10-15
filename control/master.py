@@ -1,3 +1,4 @@
+from gevent import monkey; monkey.patch_all()
 import Pyro4
 import bottle
 import functools
@@ -79,7 +80,6 @@ def log():
 if __name__ == "__main__":
     from gevent.pywsgi import WSGIServer
     from geventwebsocket.handler import WebSocketHandler
-    from gevent import monkey; monkey.patch_all()
 
     logger = logging.getLogger()
 
