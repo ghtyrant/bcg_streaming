@@ -138,7 +138,7 @@ app.controller('CommandModalInstanceCtrl', function ($scope, $modalInstance, $fi
 });
 
 app.controller('LogCtrl', function ($scope, $websocket) {
-  var ws = $websocket.$new({
+  /*var ws = $websocket.$new({
         url: 'ws://127.0.0.1:8080/log', 
         reconnect: true
   });
@@ -150,5 +150,5 @@ app.controller('LogCtrl', function ($scope, $websocket) {
   })
   .$on('log', function (message) { // it listents for 'incoming event'
     $scope.log_messages += "\n" + message
-  });
+  });*/
 });
