@@ -1,16 +1,23 @@
-import Tkinter
 import sys
 import Pyro4
 import psutil
 import multiprocessing
 import time
-import pyscreenshot
 import base64
 import ctypes
 import logging
-from functools import partial
+import os
 
-import generated_vlc as vlc
+def running_on_pi():
+    return os.uname()[4].startswith("arm")
+
+if running_on_pi():
+    import omxplayer
+    import subprocess
+    import PIL
+else:
+    import pyscreenshot
+    import generated_vlc as vlc
 
 
 def bytes_to_str(b):
@@ -52,7 +59,7 @@ class VLCLogHandler:
         logging.warn(bufferString.raw)
 
 
-def stream_player_process(pipe, stream_url):
+def stream_player_process_vlc(pipe, stream_url):
     instance = vlc.Instance('--sub-filter "logo{file=logo.png,opacity=40,x=10,y=10}"')
 
     try:
@@ -108,6 +115,21 @@ def stream_player_process(pipe, stream_url):
 
     pipe.close()
 
+def stream_player_process_omx(pipe, stream_url):
+    player = omxplayer.OMXPlayer(stream_url)
+    player.play()
+
+    while True:
+        cmd = ""
+        if pipe.poll(1):
+            cmd = pipe.recv()
+            if cmd == "stop":
+                break
+
+        time.sleep(1)
+
+    player.quit()
+
 
 class StreamSlaveControl:
     def __init__(self):
@@ -138,7 +160,12 @@ class StreamSlaveControl:
 
         self.stream_url = stream_url
         (self.stream_player_pipe, process_pipe) = multiprocessing.Pipe(duplex=True)
-        self.stream_player = multiprocessing.Process(target=stream_player_process, args=(process_pipe, stream_url))
+
+        target = stream_player_process_vlc
+        if running_on_pi():
+            target = stream_player_process_omx
+
+        self.stream_player = multiprocessing.Process(target=target, args=(process_pipe, stream_url))
         self.stream_player.start()
 
     def stop_stream(self):
@@ -147,7 +174,17 @@ class StreamSlaveControl:
             self.stream_player_pipe.close()
 
     def get_screenshot(self):
-        img = pyscreenshot.grab()
+        if running_on_pi():
+            ret = subprocess.call(["/home/alarmpi/raspi2png", "--pngname", "/tmp/screen.png"])
+
+            if not ret:
+                return
+
+            img = PIL.open("/tmp/screen.png")
+
+        else:
+            img = pyscreenshot.grab()
+
         img.thumbnail((200, 200))
         return {"data": base64.b64encode(img.tobytes()), "size": img.size, "mode": img.mode}
 
@@ -177,21 +214,18 @@ def generate_free_name(ns):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2 and sys.argv[1] == "--test":
-        ss = StreamSlaveControl()
-        #ss.start_stream("/home/fabian/20140731-TVGE2110-Monty_Python_live__mostly_.mp4")
-        ss.start_stream("https://youtu.be/ikpc1BN4nN8")
-        sys.exit(0)
+    if len(sys.argv) != 2:
+        print("Usage: %s <ip addr>" % (sys.argv[0]))
+        sys.exit(-1)
 
-    daemon = Pyro4.Daemon("0.0.0.0")
-    print("Locating nameserver ...")
+    ip = sys.argv[1]
+
+    daemon = Pyro4.Daemon(ip)
+    print("Locating nameserver (local ip: %s) ..." % (ip))
     ns = Pyro4.locateNS()
     uri = daemon.register(StreamSlaveControl())
 
-    if len(sys.argv) == 2:
-        name = "slave.%s" % (sys.argv[1])
-    else:
-        name = generate_free_name(ns)
+    name = generate_free_name(ns)
 
     print("Registering with nameserver (name: %s) ..." % (name))
     ns.register(name, uri, safe=True)
