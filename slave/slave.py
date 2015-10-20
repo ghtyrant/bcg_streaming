@@ -20,115 +20,116 @@ else:
     import generated_vlc as vlc
 
 
-def bytes_to_str(b):
-    if isinstance(b, str):
-        return unicode(b, sys.getfilesystemencoding())
-    else:
-        return b
+if running_on_pi():
+    def stream_player_process(pipe, stream_url):
+        player = omxplayer.OMXPlayer(stream_url)
+        player.play()
 
-def mspf(player):
-    """Milliseconds per frame."""
-    return int(1000 // (player.get_fps() or 25))
+        while True:
+            cmd = ""
+            if pipe.poll(1):
+                cmd = pipe.recv()
+                if cmd == "stop":
+                    break
 
-def stream_player_error(event, player):
-    print(event)
+            time.sleep(1)
 
-    media = player.get_media()
-    print('State: %s' % player.get_state())
-    print('Media: %s' % bytes_to_str(media.get_mrl()))
-    print('Track: %s/%s' % (player.video_get_track(), player.video_get_track_count()))
-    print('Current time: %s/%s' % (player.get_time(), media.get_duration()))
-    print('Position: %s' % player.get_position())
-    print('FPS: %s (%d ms)' % (player.get_fps(), mspf(player)))
-    print('Rate: %s' % player.get_rate())
-    print('Video size: %s' % str(player.video_get_size(0)))  # num=0
-    print('Scale: %s' % player.video_get_scale())
-    print('Aspect ratio: %s' % player.video_get_aspect_ratio())
-    #print('Window:' % player.get_hwnd()
+        player.quit()
+else:
+    def bytes_to_str(b):
+        if isinstance(b, str):
+            return unicode(b, sys.getfilesystemencoding())
+        else:
+            return b
 
-    #player.stop()
+    def mspf(player):
+        """Milliseconds per frame."""
+        return int(1000 // (player.get_fps() or 25))
+
+    def stream_player_error(event, player):
+        print(event)
+
+        media = player.get_media()
+        print('State: %s' % player.get_state())
+        print('Media: %s' % bytes_to_str(media.get_mrl()))
+        print('Track: %s/%s' % (player.video_get_track(), player.video_get_track_count()))
+        print('Current time: %s/%s' % (player.get_time(), media.get_duration()))
+        print('Position: %s' % player.get_position())
+        print('FPS: %s (%d ms)' % (player.get_fps(), mspf(player)))
+        print('Rate: %s' % player.get_rate())
+        print('Video size: %s' % str(player.video_get_size(0)))  # num=0
+        print('Scale: %s' % player.video_get_scale())
+        print('Aspect ratio: %s' % player.video_get_aspect_ratio())
+        #print('Window:' % player.get_hwnd()
+
+        #player.stop()
 
 
-class VLCLogHandler:
-    libc = ctypes.CDLL("libc.so.6")
+    class VLCLogHandler:
+        libc = ctypes.CDLL("libc.so.6")
 
-    @vlc.CallbackDecorators.LogCb
-    def log_handler(instance, log_level, log, fmt, va_list):
-        bufferString = ctypes.create_string_buffer(4096)
-        VLCLogHandler.libc.vsprintf(bufferString, fmt, ctypes.cast(va_list, ctypes.c_void_p))
-        logging.warn(bufferString.raw)
+        @vlc.CallbackDecorators.LogCb
+        def log_handler(instance, log_level, log, fmt, va_list):
+            bufferString = ctypes.create_string_buffer(4096)
+            VLCLogHandler.libc.vsprintf(bufferString, fmt, ctypes.cast(va_list, ctypes.c_void_p))
+            logging.warn(bufferString.raw)
 
 
-def stream_player_process_vlc(pipe, stream_url):
-    instance = vlc.Instance('--sub-filter "logo{file=logo.png,opacity=40,x=10,y=10}"')
+    def stream_player_process(pipe, stream_url):
+        instance = vlc.Instance('--sub-filter "logo{file=logo.png,opacity=40,x=10,y=10}"')
 
-    try:
-        # Create new media from stream URL
-        media = instance.media_new(stream_url)
-    except NameError:
-        print('NameError: %s (%s vs LibVLC %s)' % (sys.exc_info()[1],
-                                                   vlc.__version__,
-                                                   vlc.libvlc_get_version()))
-        return
+        try:
+            # Create new media from stream URL
+            media = instance.media_new(stream_url)
+        except NameError:
+            print('NameError: %s (%s vs LibVLC %s)' % (sys.exc_info()[1],
+                                                    vlc.__version__,
+                                                    vlc.libvlc_get_version()))
+            return
 
-    player = instance.media_player_new()
+        player = instance.media_player_new()
 
-    instance.log_set(VLCLogHandler.log_handler, player)
+        instance.log_set(VLCLogHandler.log_handler, player)
 
-    event_manager = player.event_manager()
-    event_manager.event_attach(vlc.EventType.MediaPlayerEncounteredError, stream_player_error, player)
+        event_manager = player.event_manager()
+        event_manager.event_attach(vlc.EventType.MediaPlayerEncounteredError, stream_player_error, player)
 
-    player.set_media(media)
+        player.set_media(media)
 
-    # To play YouTube stream URLs (besides everything else)
-    # we have to create a media_list and a media_list_player
-    # Otherwise libvlc won't resolve a YT URL to a real stream URL
-    media_list = instance.media_list_new([media])
+        # To play YouTube stream URLs (besides everything else)
+        # we have to create a media_list and a media_list_player
+        # Otherwise libvlc won't resolve a YT URL to a real stream URL
+        media_list = instance.media_list_new([media])
 
-    list_player = instance.media_list_player_new()
-    list_player.set_media_player(player)
-    list_player.set_media_list(media_list)
+        list_player = instance.media_list_player_new()
+        list_player.set_media_player(player)
+        list_player.set_media_list(media_list)
 
-    list_player.play()
+        list_player.play()
 
-    player.set_fullscreen(True)
+        player.set_fullscreen(True)
 
-    # Give VLC a bit to start playing the stream
-    time.sleep(3)
+        # Give VLC a bit to start playing the stream
+        time.sleep(3)
 
-    while True:
-        cmd = ""
-        if pipe.poll(1):
-            cmd = pipe.recv()
-            if cmd == "stop":
+        while True:
+            cmd = ""
+            if pipe.poll(1):
+                cmd = pipe.recv()
+                if cmd == "stop":
+                    break
+
+            if not player.is_playing():
                 break
 
-        if not player.is_playing():
-            break
+            time.sleep(1)
 
-        time.sleep(1)
+        media.release()
+        media_list.release()
+        list_player.release()
+        player.release()
 
-    media.release()
-    media_list.release()
-    list_player.release()
-    player.release()
-
-    pipe.close()
-
-def stream_player_process_omx(pipe, stream_url):
-    player = omxplayer.OMXPlayer(stream_url)
-    player.play()
-
-    while True:
-        cmd = ""
-        if pipe.poll(1):
-            cmd = pipe.recv()
-            if cmd == "stop":
-                break
-
-        time.sleep(1)
-
-    player.quit()
+        pipe.close()
 
 
 class StreamSlaveControl:
@@ -161,11 +162,7 @@ class StreamSlaveControl:
         self.stream_url = stream_url
         (self.stream_player_pipe, process_pipe) = multiprocessing.Pipe(duplex=True)
 
-        target = stream_player_process_vlc
-        if running_on_pi():
-            target = stream_player_process_omx
-
-        self.stream_player = multiprocessing.Process(target=target, args=(process_pipe, stream_url))
+        self.stream_player = multiprocessing.Process(target=stream_player_process, args=(process_pipe, stream_url))
         self.stream_player.start()
 
     def stop_stream(self):
