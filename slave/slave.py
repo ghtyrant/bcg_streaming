@@ -174,7 +174,8 @@ class StreamSlaveControl:
         if running_on_pi():
             ret = subprocess.call(["/home/alarmpi/raspi2png", "--pngname", "/tmp/screen.png"])
 
-            if not ret:
+            if not ret or not os.path.exists("/tmp/screen.png"):
+                print("Error fetching screenshot!")
                 return
 
             img = PIL.open("/tmp/screen.png")

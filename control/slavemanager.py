@@ -51,6 +51,10 @@ class SlaveManager:
     def fetch_slave_screenshot(self, slave_name):
         slave = self.slaves[slave_name]
         img_data = slave.get_screenshot()
+
+        if not img_data:
+            return
+
         img_data['data'] = base64.b64decode(img_data['data'])
         img = Image.frombytes(**img_data)
         img_file = open("screens/%s.jpg" % slave_name, "wb")

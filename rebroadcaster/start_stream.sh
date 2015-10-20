@@ -24,4 +24,5 @@ echo
 echo
 echo
 echo "-----------------------------------------------------------------------------------------------"
-ffmpeg -i $STREAM_URL -c copy -hls_time 20 -hls_wrap 10 /srv/http/stream/out.m3u8
+rm /srv/http/stream/*
+ffmpeg -i $STREAM_URL -c copy -hls_time 60 -hls_wrap 50 -hls_flags delete_segments -hls_allow_cache 1 /srv/http/stream/out.m3u8

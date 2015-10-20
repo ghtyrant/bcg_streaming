@@ -95,7 +95,6 @@ if __name__ == "__main__":
 
     logging.getLogger("geventwebsocket.handler").setLevel(logging.WARN)
 
-
     slavemanager = SlaveManager()
 
     bottle.debug(True)
