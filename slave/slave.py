@@ -147,6 +147,9 @@ class StreamSlaveControl:
     def name(self, value):
         self.name = value
 
+    def ping(self):
+        return "pong"
+
     def get_system_status(self):
         return {
             "load": psutil.cpu_percent(),

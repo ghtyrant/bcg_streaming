@@ -6,6 +6,22 @@ import psutil
 import base64
 from PIL import Image
 
+class SlaveWrapper(object):
+    def __init__(self, name, address, obj):
+        self._wrapped_obj = obj
+        self.name = name
+        self.address = address
+        self.last_ping = time.time()
+
+    def __getattr__(self, attr):
+        # see if this object has attr
+        # NOTE do not use hasattr, it goes into
+        # infinite recurrsion
+        if attr in self.__dict__:
+            return getattr(self, attr)
+
+        return getattr(self._wrapped_obj, attr)
+
 class SlaveManager:
     STATUS_OFFLINE = 0
     STATUS_ONLINE = 1
@@ -92,15 +108,20 @@ class SlaveManager:
 
         for name, address in slaves_addresses.items():
             if name in self.slaves:
+                try:
+                    if self.slaves[name].ping() == "pong":
+                        self.slaves.last_ping = time.time()
+                except Pyro4.errors.CommunicationError as e:
+                    pass
+
+                if time.time() - self.slaves.last_ping > 20:
+                    logging.info("Removing slave %s due to timeout ..." % (name))
+                    self.nameserver.unregister(name=name)
+
                 continue
 
-            try:
-                logging.info("Discovered new slave %s (@%s) ..." % (name, address))
-                self.slaves[name] = Pyro4.Proxy(address)
-                self.slaves[name].name = name
-            except Pyro4.errors.CommunicationError as e:
-                logging.exception("Error communicating with slave!")
-                continue
+            logging.info("Discovered new slave %s (@%s) ..." % (name, address))
+            self.slaves[name] = SlaveWrapper(name, address, Pyro4.Proxy(address))
 
         offline_slaves = [x for x in self.slaves.keys() if x not in slaves_addresses.keys()]
         for slave_name in offline_slaves:
