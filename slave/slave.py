@@ -39,6 +39,7 @@ if running_on_pi():
 
             time.sleep(1)
 
+        print("Terminating player ...")
         p.terminate()
 else:
     def bytes_to_str(b):

@@ -118,7 +118,8 @@ class SlaveManager:
                     logging.info("Removing slave %s due to timeout ..." % (name))
                     self.nameserver.remove(name=name)
 
-                continue
+                if address == self.slaves[name].address:
+                    continue
 
             logging.info("Discovered new slave %s (@%s) ..." % (name, address))
             self.slaves[name] = SlaveWrapper(name, address, Pyro4.Proxy(address))

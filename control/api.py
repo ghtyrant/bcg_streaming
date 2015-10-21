@@ -51,6 +51,9 @@ def start_stream():
     url = bottle.request.json['url']
     slave_name = bottle.request.json['slave']
 
+    if not url:
+        return { 'message': 'Empty URL!' }
+
     if slave_name == '*':
         slaves = apiApp.slavemanager.get_all_slaves()
     else:
