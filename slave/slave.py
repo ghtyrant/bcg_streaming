@@ -34,6 +34,7 @@ if running_on_pi():
 
             # Restart omxplayer in case it died
             if p.poll() is not None:
+                print("Restarting omxplayer ...")
                 p = subprocess.Popen(["/usr/bin/omxplayer", stream_url])
 
             time.sleep(1)
@@ -245,6 +246,8 @@ if __name__ == "__main__":
     print("Done! Starting event loop ...")
     def pingTimeout():
         return time.time() - sc.last_ping <= 20
+
+    display_image("/home/alarm/background.png")
 
     while True:
         try:
