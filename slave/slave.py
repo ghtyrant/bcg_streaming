@@ -237,7 +237,7 @@ if __name__ == "__main__":
 
     print("Done! Starting event loop ...")
     def pingTimeout():
-        return time.time() - sc >= 20
+        return time.time() - sc.last_ping >= 20
     daemon.requestLoop(loopCondition=pingTimeout)
 
     daemon.close()
