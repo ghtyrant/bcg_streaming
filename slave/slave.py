@@ -23,8 +23,7 @@ else:
 
 if running_on_pi():
     def stream_player_process(pipe, stream_url):
-        player = omxplayer.OMXPlayer(stream_url)
-        player.play()
+        p = subprocess.Popen(["/usr/bin/omxplayer", stream_url])
 
         while True:
             cmd = ""
@@ -33,10 +32,13 @@ if running_on_pi():
                 if cmd == "stop":
                     break
 
-            print("Playing: %s" % (player.is_playing()))
+            # Restart omxplayer in case it died
+            if p.poll() is not None:
+                p = subprocess.Popen(["/usr/bin/omxplayer", stream_url])
+
             time.sleep(1)
 
-        player.quit()
+        p.terminate()
 else:
     def bytes_to_str(b):
         if isinstance(b, str):
