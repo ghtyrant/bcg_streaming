@@ -7,6 +7,7 @@ import base64
 import ctypes
 import logging
 import os
+import hashlib
 
 def running_on_pi():
     return os.uname()[4].startswith("arm")
@@ -14,7 +15,7 @@ def running_on_pi():
 if running_on_pi():
     import omxplayer
     import subprocess
-    import PIL
+    from PIL import Image
 else:
     import pyscreenshot
     import generated_vlc as vlc
@@ -176,9 +177,9 @@ class StreamSlaveControl:
 
             if not ret or not os.path.exists("/tmp/screen.png"):
                 print("Error fetching screenshot!")
-                return
+                return {"error": True}
 
-            img = PIL.open("/tmp/screen.png")
+            img = Image.open("/tmp/screen.png")
 
         else:
             img = pyscreenshot.grab()
@@ -223,7 +224,7 @@ if __name__ == "__main__":
     ns = Pyro4.locateNS()
     uri = daemon.register(StreamSlaveControl())
 
-    name = generate_free_name(ns)
+    name = "slave-%s" % (hashlib.sha1(ip).hexdigest()[:8])
 
     print("Registering with nameserver (name: %s) ..." % (name))
     ns.register(name, uri, safe=True)
