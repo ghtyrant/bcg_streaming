@@ -52,7 +52,7 @@ class SlaveManager:
         slave = self.slaves[slave_name]
         img_data = slave.get_screenshot()
 
-        if not img_data:
+        if not img_data or "error" in img_data:
             return
 
         img_data['data'] = base64.b64decode(img_data['data'])
