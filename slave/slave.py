@@ -227,7 +227,7 @@ if __name__ == "__main__":
     name = "slave-%s" % (hashlib.sha1(ip).hexdigest()[:8])
 
     print("Registering with nameserver (name: %s) ..." % (name))
-    ns.register(name, uri, safe=True)
+    ns.register(name, uri)
 
     print("Done! Starting event loop ...")
     daemon.requestLoop()
