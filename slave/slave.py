@@ -138,7 +138,7 @@ else:
         pipe.close()
 
 def display_image(path):
-    subprocess.call(["fbi", "-a", "-noverbose", path])
+    subprocess.call(["fbi", "-T", "1", "-a", "-noverbose", path])
 
 
 class StreamSlaveControl:
