@@ -138,6 +138,7 @@ class StreamSlaveControl:
         self.stream_player = None
         self.stream_player_pipe = None
         self.stream_url = None
+        self.last_ping = time.time()
 
     @property
     def name(self):
@@ -148,6 +149,7 @@ class StreamSlaveControl:
         self.name = value
 
     def ping(self):
+        self.last_ping = time.time()
         return "pong"
 
     def get_system_status(self):
@@ -225,7 +227,8 @@ if __name__ == "__main__":
     daemon = Pyro4.Daemon(ip)
     print("Locating nameserver (local ip: %s) ..." % (ip))
     ns = Pyro4.locateNS()
-    uri = daemon.register(StreamSlaveControl())
+    sc = StreamSlaveControl()
+    uri = daemon.register(sc)
 
     name = "slave-%s" % (hashlib.sha1(ip).hexdigest()[:8])
 
@@ -233,7 +236,11 @@ if __name__ == "__main__":
     ns.register(name, uri)
 
     print("Done! Starting event loop ...")
-    daemon.requestLoop()
+    def pingTimeout():
+        return time.time() - sc >= 20
+    daemon.requestLoop(loopCondition=pingTimeout)
+
+    daemon.close()
 
     print("Removing ourself from the name server ...")
     ns.remove(name)

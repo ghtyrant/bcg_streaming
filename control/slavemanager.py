@@ -110,13 +110,13 @@ class SlaveManager:
             if name in self.slaves:
                 try:
                     if self.slaves[name].ping() == "pong":
-                        self.slaves.last_ping = time.time()
+                        self.slaves[name].last_ping = time.time()
                 except Pyro4.errors.CommunicationError as e:
                     pass
 
-                if time.time() - self.slaves.last_ping > 20:
+                if time.time() - self.slaves[name].last_ping > 20:
                     logging.info("Removing slave %s due to timeout ..." % (name))
-                    self.nameserver.unregister(name=name)
+                    self.nameserver.remove(name=name)
 
                 continue
 
