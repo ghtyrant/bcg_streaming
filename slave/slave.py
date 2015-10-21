@@ -33,6 +33,7 @@ if running_on_pi():
                 if cmd == "stop":
                     break
 
+            print("Playing: %s" % (player.is_playing()))
             time.sleep(1)
 
         player.quit()
@@ -132,6 +133,9 @@ else:
 
         pipe.close()
 
+def display_image(path):
+    subprocess.call(["fbi", "-a", "-noverbose", path])
+
 
 class StreamSlaveControl:
     def __init__(self):
@@ -168,6 +172,7 @@ class StreamSlaveControl:
         self.stream_url = stream_url
         (self.stream_player_pipe, process_pipe) = multiprocessing.Pipe(duplex=True)
 
+        print("Starting stream for %s ..." % (stream_url))
         self.stream_player = multiprocessing.Process(target=stream_player_process, args=(process_pipe, stream_url))
         self.stream_player.start()
 
@@ -238,7 +243,13 @@ if __name__ == "__main__":
     print("Done! Starting event loop ...")
     def pingTimeout():
         return time.time() - sc.last_ping <= 20
-    daemon.requestLoop(loopCondition=pingTimeout)
+
+    while True:
+        try:
+            daemon.requestLoop(loopCondition=pingTimeout)
+            ns.register(name, uri)
+        except KeyboardInterrupt:
+            break
 
     daemon.close()
 
