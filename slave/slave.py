@@ -13,7 +13,6 @@ def running_on_pi():
     return os.uname()[4].startswith("arm")
 
 if running_on_pi():
-    import omxplayer
     import subprocess
     from PIL import Image
 else:
@@ -22,9 +21,9 @@ else:
 
 
 if running_on_pi():
+    OMX_ARGS = ["/usr/bin/omxplayer.bin", "-o", "local", "-w"]
     def stream_player_process(pipe, stream_url):
-        p = subprocess.Popen(["/usr/bin/omxplayer", stream_url])
-
+        p = subprocess.Popen(OMX_ARGS + [stream_url,], stdin=subprocess.PIPE)
         while True:
             cmd = ""
             if pipe.poll(1):
@@ -35,12 +34,20 @@ if running_on_pi():
             # Restart omxplayer in case it died
             if p.poll() is not None:
                 print("Restarting omxplayer ...")
-                p = subprocess.Popen(["/usr/bin/omxplayer", stream_url])
+                p = subprocess.Popen(OMX_ARGS + [stream_url,], stdin=subprocess.PIPE)
 
             time.sleep(1)
 
         print("Terminating player ...")
-        p.terminate()
+
+        try:
+            p.communicate(input=b'q')
+            p.terminate()
+        except IOError:
+            p.kill()
+
+        p.wait()
+
 else:
     def bytes_to_str(b):
         if isinstance(b, str):
