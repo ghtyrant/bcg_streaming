@@ -21,7 +21,7 @@ else:
 
 
 if running_on_pi():
-    OMX_ARGS = ["/usr/bin/omxplayer.bin", "-o", "local", "-w"]
+    OMX_ARGS = ["/usr/bin/omxplayer.bin", "-r", "-o", "local", "-w"]
     def stream_player_process(pipe, stream_url):
         p = subprocess.Popen(OMX_ARGS + [stream_url,], stdin=subprocess.PIPE)
         while True:
@@ -145,7 +145,7 @@ else:
         pipe.close()
 
 def display_image(path):
-    subprocess.call(["fbi", "-T", "1", "-a", "-noverbose", path])
+    subprocess.call(["fbi", "-oneshot", "-T", "1", "-a", "-noverbose", path])
 
 
 class StreamSlaveControl:
@@ -186,6 +186,10 @@ class StreamSlaveControl:
         print("Starting stream for %s ..." % (stream_url))
         self.stream_player = multiprocessing.Process(target=stream_player_process, args=(process_pipe, stream_url))
         self.stream_player.start()
+
+    def display_image(self, image_url):
+        self.stop_stream()
+        display_image(image_url)
 
     def stop_stream(self):
         if self.stream_player_pipe:
