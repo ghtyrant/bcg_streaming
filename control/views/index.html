@@ -88,7 +88,7 @@
                             <ul class="nav nav-tabs" role="tablist">
                               <li role="presentation" class="active"><a href="#stream" aria-controls="stream" role="tab" data-toggle="tab">Stream</a></li>
                               <li role="presentation"><a href="#image" aria-controls="image" role="tab" data-toggle="tab">Image</a></li>
-                              <li role="presentation"><a href="#video" aria-controls="video" role="tab" data-toggle="tab">Video</a></li>
+                              <li role="presentation"><a href="#text" aria-controls="text" role="tab" data-toggle="tab">Text</a></li>
                               <li role="presentation"><a href="#system" aria-controls="system" role="tab" data-toggle="tab">System</a></li>
                             </ul>
 
@@ -120,8 +120,12 @@
 
                               </div>
 
-                              <div role="tabpanel" class="tab-pane" id="video">...</div>
-                              <div role="tabpanel" class="tab-pane" id="system">...</div>
+                              <div role="tabpanel" class="tab-pane" id="text">...</div>
+                              <div role="tabpanel" class="tab-pane" id="system">
+                                <form ng-submit="reboot()" ng-controller="SystemAPICtrl" class="form-inline" style="display: inline">
+                                  <button type="submit" class="btn btn-default">Reboot</button>
+                                </form>
+                              </div>
                             </div>
                           </div>
                         </div>

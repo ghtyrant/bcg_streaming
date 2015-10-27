@@ -85,6 +85,13 @@ app.controller('ImageAPICtrl', function($scope, $http) {
   };
 });
 
+app.controller('SystemAPICtrl', function($scope, $http) {
+  $scope.reboot = function() {
+    $http.post('/api/reboot', { slave: $scope.selectedSlave.name }).success(function(data) { });
+  };
+});
+
+
 app.controller('CommandModalCtrl', function ($scope, $modal, slaveService) {
 
   $scope.open = function (selected) {

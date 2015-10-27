@@ -114,3 +114,17 @@ def hide_image():
         slave.hide_image()
 
     return { 'message': 'Hiding image!' }
+
+@apiApp.post('/reboot')
+def reboot():
+    slave_name = bottle.request.json['slave']
+
+    if slave_name == '*':
+        slaves = apiApp.slavemanager.get_all_slaves()
+    else:
+        slaves = [apiApp.slavemanager.get_slave_by_name(slave_name),]
+
+    for slave in slaves:
+        slave.reboot()
+
+    return { 'message': 'Rebooting!' }
