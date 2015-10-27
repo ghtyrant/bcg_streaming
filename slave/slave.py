@@ -221,6 +221,11 @@ class StreamSlaveControl:
         else:
             return 'Stream stopped'
 
+    def reboot(self):
+        self.stop_stream()
+        subprocess.call(["/usr/bin/reboot"])
+
+
 
 def generate_free_name(ns):
     registered_slaves = ns.list(prefix="slave")
