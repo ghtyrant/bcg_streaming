@@ -1,3 +1,4 @@
+import os
 import Pyro4
 import threading
 import time
@@ -22,11 +23,14 @@ class SlaveWrapper(object):
 
         return getattr(self._wrapped_obj, attr)
 
+    def __str__(self):
+        return "<Slave (%s, %s)>" % (self.name, self.address)
+
 class SlaveManager:
     STATUS_OFFLINE = 0
     STATUS_ONLINE = 1
 
-    def __init__(self):
+    def __init__(self, base_url, base_dir):
         self.nameserver = Pyro4.locateNS()
         self.slaves = {}
 
@@ -42,6 +46,15 @@ class SlaveManager:
         self.speed_up = 0
         self.speed_down = 0
         self.traffic_last_check = 0
+
+        self.base_url = base_url
+        self.base_dir = base_dir
+
+    def get_stream_list(self):
+        return [(x, self.get_stream_url(x)) for x in os.listdir(self.base_dir) if os.path.isdir(os.path.join(self.base_dir, x)) and os.path.exists(os.path.join(os.path.join(self.base_dir, x), "out.m3u8"))]
+
+    def get_stream_url(self, stream):
+        return "%s/%s/out.m3u8" % (self.base_url, stream)
 
     def thread_update_slaves(self):
         while not self.stopped:

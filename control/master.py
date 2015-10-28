@@ -77,6 +77,18 @@ def log():
     client = LogDispatchClient(ws, apiApp.loghandler)
     client.run()
 
+
+def get_ip_address(ifname):
+    import socket
+    import fcntl
+    import struct
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    return socket.inet_ntoa(fcntl.ioctl(
+        s.fileno(),
+        0x8915,  # SIOCGIFADDR
+        struct.pack('256s', ifname[:15])
+    )[20:24])
+
 if __name__ == "__main__":
     from gevent.pywsgi import WSGIServer
     from geventwebsocket.handler import WebSocketHandler
@@ -95,7 +107,8 @@ if __name__ == "__main__":
 
     logging.getLogger("geventwebsocket.handler").setLevel(logging.WARN)
 
-    slavemanager = SlaveManager()
+    my_ip = get_ip_address("enp0s25")
+    slavemanager = SlaveManager(base_url="http://%s/bcgstreaming" % my_ip, base_dir="/srv/http/bcgstreaming")
 
     bottle.debug(True)
     apiApp.slavemanager = slavemanager

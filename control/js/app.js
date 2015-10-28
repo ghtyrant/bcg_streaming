@@ -18,6 +18,15 @@ app.factory('slaveService', function($http) {
           return result.data;
         })
     },
+    getStreams: function() {
+      //return the promise directly.
+      return $http.get('/api/stream-list')
+        .then(function(result) {
+          //resolve the promise as the data
+          return result.data;
+        })
+
+    }
   }
 });
 
@@ -61,7 +70,7 @@ app.controller('StatusCtrl', function($scope, $timeout, slaveService) {
   $scope.intervalFunction();
 });
 
-app.controller('StreamCtrl', function($scope, $http) {
+app.controller('StreamCtrl', function($scope, $http, $log) {
   $scope.url = '';
 
   $scope.start_stream = function() {
@@ -71,6 +80,10 @@ app.controller('StreamCtrl', function($scope, $http) {
   $scope.stop_stream = function() {
     $http.post('/api/stop-stream', { slave: $scope.selectedSlave.name }).success(function(data) { });
   };
+
+  $scope.selectStream = function(selectedStream) {
+    $scope.url = selectedStream[1];
+  }
 });
 
 app.controller('ImageAPICtrl', function($scope, $http) {
@@ -104,6 +117,9 @@ app.controller('CommandModalCtrl', function ($scope, $modal, slaveService) {
         slaves: function () {
           return slaveService.getSlaves();
         },
+        streams: function () {
+          return slaveService.getStreams();
+        },
         selected: function() {
           return selected || null;
         }
@@ -112,22 +128,21 @@ app.controller('CommandModalCtrl', function ($scope, $modal, slaveService) {
 
     modalInstance.result.then(function (selectedItem) {
       $scope.selected = selectedItem;
-    }, function () {
-      $log.info('Modal dismissed at: ' + new Date());
     });
   };
 });
 
-app.controller('CommandModalInstanceCtrl', function ($scope, $modalInstance, $filter, $log, slaves, selected) {
+app.controller('CommandModalInstanceCtrl', function ($scope, $modalInstance, $filter, $log, slaves, streams, selected) {
 
   var all_slaves = {"name": "*"};
   slaves.unshift(all_slaves);
   $scope.slaves = slaves;
+  $scope.streams = streams;
 
+  /* Pre-select a slave if desired */
   if (selected)
   {
     var slave = $filter("filter")(slaves, {name: selected}, true);
-    $log.info(slave);
     $scope.selectedSlave = slave[0];
   }
   else

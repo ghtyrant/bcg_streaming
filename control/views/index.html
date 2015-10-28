@@ -99,6 +99,7 @@
                                 <p>Control starting and stopping of streams on slaves.</p>
                                 <form ng-submit="start_stream()" ng-controller="StreamCtrl" class="form-inline" style="display: inline">
                                   <input type="text" name="url" class="form-control" ng-model="url"/>
+                                  <select class="form-control" ng-options="s[0] for s in streams" ng-change="selectStream(selectedStream);" ng-model="selectedStream"></select>
                                   <select class="form-control" data-ng-options="s.name + (s.status != null ? ' [' + s.status + ']' : '') for s in slaves" name="slave" data-ng-model="selectedSlave"></select>
                                   <button type="submit" class="btn btn-default">Start streams</button>
                                   <hr/>

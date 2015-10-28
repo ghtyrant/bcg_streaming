@@ -46,13 +46,17 @@ def get_status():
         "traffic_speed": (traffic_speed[0], traffic_speed[1]),
     }
 
+@apiApp.route('/stream-list')
+def stream_list():
+    return json.dumps(apiApp.slavemanager.get_stream_list())
+
 @apiApp.post('/start-stream')
 def start_stream():
     url = bottle.request.json['url']
     slave_name = bottle.request.json['slave']
 
     if not url:
-        return { 'message': 'Empty URL!' }
+        return { 'message': 'Empty URL or no stream selected!' }
 
     if slave_name == '*':
         slaves = apiApp.slavemanager.get_all_slaves()
