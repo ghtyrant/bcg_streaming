@@ -251,7 +251,16 @@ if __name__ == "__main__":
 
     daemon = Pyro4.Daemon(ip)
     print("Locating nameserver (local ip: %s) ..." % (ip))
-    ns = Pyro4.locateNS()
+
+    while True:
+        try:
+            ns = Pyro4.locateNS()
+            if ns:
+                break
+        except Pyro4.errors.NamingError:
+            print("Could not locate Nameserver, retrying in 2 seconds ...")
+            time.sleep(2)
+
     sc = StreamSlaveControl()
     uri = daemon.register(sc)
 
