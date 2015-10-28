@@ -266,7 +266,7 @@ if __name__ == "__main__":
             time.sleep(2)
 
     # Get IP address of nameserver
-    ns_location = ns._pyroURI.location
+    ns_location = ns._pyroUri.location
     http_ip = ns_location[:ns_location.find(":")]
     http_base_url = "http://%s/bcgstreaming/" % (http_ip,)
 
