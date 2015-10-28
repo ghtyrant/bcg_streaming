@@ -1,0 +1,21 @@
+diff --git a/Makefile b/Makefile
+index 30c1e36..e32131c 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,5 +1,8 @@
+ OBJS=raspi2png.o
+ BIN=raspi2png
++prefix?=/usr/local
++DESTDIR=
++bindir=$(DESTDIR)$(prefix)/bin
+ 
+ CFLAGS+=-Wall -g -O3 $(shell libpng-config --cflags)
+ LDFLAGS+=-L/opt/vc/lib/ -lbcm_host $(shell libpng-config --ldflags) -lm
+@@ -18,3 +21,7 @@ $(BIN): $(OBJS)
+ clean:
+ 	@rm -f $(OBJS)
+ 	@rm -f $(BIN)
++
++install:
++	install -d $(bindir)
++	install -s $(BIN) $(bindir)/$(BIN)

@@ -1,0 +1,44 @@
+# Maintainer: Fabian Schlager <fabian.schlager@skyr.at>
+pkgname=raspi2png-git # '-bzr', '-git', '-hg' or '-svn'
+pkgver=r47.d8a6703
+pkgrel=1
+pkgdesc="Utility to take a snapshot of the Raspberry Pi screen and save it as a PNG file."
+arch=('x86' 'x86_64' 'armv7h')
+url="https://github.com/AndrewFromMelbourne/raspi2png"
+license=('GPL')
+groups=()
+depends=()
+makedepends=('git')
+provides=("${pkgname%-git}")
+conflicts=("${pkgname%-git}")
+replaces=()
+backup=()
+options=()
+install=
+source=('git+https://github.com/AndrewFromMelbourne/raspi2png'
+	'raspi2png.patch')
+noextract=()
+md5sums=('SKIP'
+	'2530c8a00a0cf667b05ad8f04f165146')
+
+pkgver() {
+	cd "$srcdir/${pkgname%-git}"
+
+	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+prepare() {
+        cd "$srcdir/${pkgname%-git}"
+        patch -p1 -i "$srcdir/${pkgname%-git}.patch"
+}
+
+
+build() {
+	cd "$srcdir/${pkgname%-git}"
+	make
+}
+
+package() {
+	cd "$srcdir/${pkgname%-git}"
+	make prefix=/usr DESTDIR="$pkgdir/" install
+}
