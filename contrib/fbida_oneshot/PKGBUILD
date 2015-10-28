@@ -1,0 +1,45 @@
+# Maintainer: Fabian Schlager <fabian.schlager@skyr.at>
+pkgname=fbida-git
+pkgver=r120.88d16bf
+pkgrel=1
+pkgdesc="The fbida project contains a few applications for viewing and editing images."
+arch=('x86' 'x86_64' 'armv7h')
+url="https://www.kraxel.org/blog/linux/fbida/"
+license=('GPL')
+groups=()
+depends=()
+makedepends=('git')
+provides=("${pkgname%-git}")
+conflicts=("${pkgname%-git}")
+replaces=()
+backup=()
+options=()
+install=
+source=('git+https://github.com/ghtyrant/fbida.git')
+noextract=()
+md5sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/${pkgname%-git}"
+
+	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+#prepare() {
+	#cd "$srcdir/${pkgname%-git}"
+#}
+
+build() {
+	cd "$srcdir/${pkgname%-git}"
+	make
+}
+
+#check() {
+#	cd "$srcdir/${pkgname%-git}"
+#	make -k check
+#}
+
+package() {
+	cd "$srcdir/${pkgname%-git}"
+	make prefix=/usr DESTDIR="$pkgdir/" install
+}

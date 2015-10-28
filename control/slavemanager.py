@@ -116,7 +116,7 @@ class SlaveManager:
 
                 if time.time() - self.slaves[name].last_ping > 20:
                     logging.info("Removing slave %s due to timeout ..." % (name))
-                    self.nameserver.remove(name=name)
+                    #self.nameserver.remove(name=name)
 
                 if address == self.slaves[name].address:
                     continue

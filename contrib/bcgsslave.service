@@ -1,0 +1,12 @@
+[Unit]
+Description=BCG Streaming Slave
+Requires=netctl.service
+After=netctl.service
+
+[Service]
+#User=alarm
+ExecStart=/home/alarm/bcg_streaming/slave/start_slave.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
