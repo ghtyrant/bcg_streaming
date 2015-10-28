@@ -48,6 +48,9 @@ if running_on_pi():
 
         p.wait()
 
+    def display_image(path):
+        subprocess.call(["fbi", "-oneshot", "-T", "1", "-a", "-noverbose", path])
+
 else:
     def bytes_to_str(b):
         if isinstance(b, str):
@@ -144,16 +147,17 @@ else:
 
         pipe.close()
 
-def display_image(path):
-    subprocess.call(["fbi", "-oneshot", "-T", "1", "-a", "-noverbose", path])
 
 
 class StreamSlaveControl:
-    def __init__(self):
+    def __init__(self, http_base_url):
         self.stream_player = None
         self.stream_player_pipe = None
         self.stream_url = None
         self.last_ping = time.time()
+        self.http_base_url = http_base_url
+
+        display_image("%sbackground.png" % (self.http_base_url))
 
     @property
     def name(self):
@@ -261,7 +265,12 @@ if __name__ == "__main__":
             print("Could not locate Nameserver, retrying in 2 seconds ...")
             time.sleep(2)
 
-    sc = StreamSlaveControl()
+    # Get IP address of nameserver
+    ns_location = ns._pyroURI.location
+    http_ip = ns_location[:ns_location.find(":")]
+    http_base_url = "http://%s/bcgstreaming/" % (http_ip,)
+
+    sc = StreamSlaveControl(http_base_url)
     uri = daemon.register(sc)
 
     name = "slave-%s" % (hashlib.sha1(ip).hexdigest()[:8])
@@ -273,11 +282,11 @@ if __name__ == "__main__":
     def pingTimeout():
         return time.time() - sc.last_ping <= 20
 
-    display_image("/home/alarm/background.png")
-
     while True:
         try:
             daemon.requestLoop(loopCondition=pingTimeout)
+            ns.remove(name=name)
+            time.sleep(2)
             ns.register(name, uri)
         except KeyboardInterrupt:
             break
