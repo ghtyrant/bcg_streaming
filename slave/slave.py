@@ -157,7 +157,7 @@ class StreamSlaveControl:
         self.last_ping = time.time()
         self.http_base_url = http_base_url
 
-        display_image("%sbackground.png" % (self.http_base_url))
+        display_image("%s/background.png" % (self.http_base_url))
 
     @property
     def name(self):
