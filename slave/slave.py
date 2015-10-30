@@ -199,6 +199,9 @@ class StreamSlaveControl:
         if self.stream_player_pipe:
             self.stream_player_pipe.send("stop")
             self.stream_player_pipe.close()
+            self.stream_player_pipe = None
+
+            time.sleep(1)
             display_image("%s/background.png" % (self.http_base_url))
 
     def get_screenshot(self):
