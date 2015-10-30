@@ -50,7 +50,8 @@ if running_on_pi():
 
     def display_image(path, fixed=False):
         opts = ["/usr/bin/fbi", "-T", "1", "-a", "-noverbose"]
-        if fixed:
+
+        if not fixed:
             opts = opts + ["-oneshot",]
 
         subprocess.call(opts + [path,])
@@ -161,7 +162,7 @@ class StreamSlaveControl:
         self.last_ping = time.time()
         self.http_base_url = http_base_url
 
-        display_image("%s/background.png" % (self.http_base_url), fixed=True)
+        display_image("%s/background.png" % (self.http_base_url))
 
     @property
     def name(self):
@@ -195,8 +196,10 @@ class StreamSlaveControl:
         self.stream_player = multiprocessing.Process(target=stream_player_process, args=(process_pipe, stream_url))
         self.stream_player.start()
 
-    def display_image(self, image_url):
-        self.stop_stream()
+    def display_image(self, image_url, stop_stream=True):
+        if stop_stream:
+            self.stop_stream()
+
         display_image(image_url)
 
     def stop_stream(self):
@@ -204,6 +207,8 @@ class StreamSlaveControl:
             self.stream_player_pipe.send("stop")
             self.stream_player_pipe.close()
             self.stream_player_pipe = None
+
+        display_image("%s/background.png" % (self.http_base_url))
 
     def get_screenshot(self):
         if running_on_pi():
