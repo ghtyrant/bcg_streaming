@@ -127,9 +127,11 @@ class SlaveManager:
                 except Pyro4.errors.CommunicationError as e:
                     pass
 
-                if time.time() - self.slaves[name].last_ping > 20:
+                if time.time() - self.slaves[name].last_ping > 5:
                     logging.info("Removing slave %s due to timeout ..." % (name))
-                    #self.nameserver.remove(name=name)
+                    del self.slaves[name]
+                    self.nameserver.remove(name=name)
+                    continue
 
                 if address == self.slaves[name].address:
                     continue
