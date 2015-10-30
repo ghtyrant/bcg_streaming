@@ -42,7 +42,6 @@ if running_on_pi():
 
         try:
             p.communicate(input=b'q')
-            p.terminate()
         except IOError:
             p.kill()
 
