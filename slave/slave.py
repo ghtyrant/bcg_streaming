@@ -189,7 +189,8 @@ class StreamSlaveControl:
             if self.stream_player.is_alive():
                 self.stop_stream()
             else:
-                self.stream_player_pipe.close()
+                if self.stream_player_pipe:
+                    self.stream_player_pipe.close()
 
         self.stream_url = stream_url
         (self.stream_player_pipe, process_pipe) = multiprocessing.Pipe(duplex=True)
