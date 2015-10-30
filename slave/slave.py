@@ -199,6 +199,7 @@ class StreamSlaveControl:
         if self.stream_player_pipe:
             self.stream_player_pipe.send("stop")
             self.stream_player_pipe.close()
+            display_image("%s/background.png" % (self.http_base_url))
 
     def get_screenshot(self):
         if running_on_pi():
@@ -236,6 +237,9 @@ def generate_free_name(ns):
 
     max_num = 0
     for slave, _ in registered_slaves.items():
+        if not "." in slave:
+            continue
+
         num = int(slave.split(".")[1])
 
         if num > max_num:
@@ -273,14 +277,14 @@ if __name__ == "__main__":
     sc = StreamSlaveControl(http_base_url)
     uri = daemon.register(sc)
 
-    name = "slave-%s" % (hashlib.sha1(ip).hexdigest()[:8])
+    name = generate_free_name(ns) #"slave-%s" % (hashlib.sha1(ip).hexdigest()[:8])
 
     print("Registering with nameserver (name: %s) ..." % (name))
     ns.register(name, uri)
 
     print("Done! Starting event loop ...")
     def pingTimeout():
-        return time.time() - sc.last_ping <= 20
+        return time.time() - sc.last_ping <= 6
 
     while True:
         try:

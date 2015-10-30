@@ -1,4 +1,5 @@
 from gevent import monkey; monkey.patch_all()
+import sys
 import Pyro4
 import bottle
 import functools
@@ -93,6 +94,10 @@ if __name__ == "__main__":
     from gevent.pywsgi import WSGIServer
     from geventwebsocket.handler import WebSocketHandler
 
+    Pyro4.config.COMPRESSION = True
+    Pyro4.config.COMMTIMEOUT = 2.0
+    Pyro4.config.SOCK_REUSE = True
+
     logger = logging.getLogger()
 
     handler = LogDispatchHandler()
@@ -107,7 +112,7 @@ if __name__ == "__main__":
 
     logging.getLogger("geventwebsocket.handler").setLevel(logging.WARN)
 
-    my_ip = get_ip_address("enp0s25")
+    my_ip = sys.argv[1] #get_ip_address("enp0s25")
     slavemanager = SlaveManager(base_url="http://%s/bcgstreaming" % my_ip, base_dir="/srv/http/bcgstreaming")
 
     bottle.debug(True)
@@ -116,7 +121,7 @@ if __name__ == "__main__":
     app.mount("/api/", apiApp)
 
 
-    host = "127.0.0.1"
+    host = "0.0.0.0"
     port = 8080
 
     server = WSGIServer((host, port), app,

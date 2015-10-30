@@ -119,6 +119,7 @@ class SlaveManager:
             self.slaves = {}
             return
 
+        print(slaves_addresses)
         for name, address in slaves_addresses.items():
             if name in self.slaves:
                 try:
@@ -127,7 +128,7 @@ class SlaveManager:
                 except Pyro4.errors.CommunicationError as e:
                     pass
 
-                if time.time() - self.slaves[name].last_ping > 5:
+                if time.time() - self.slaves[name].last_ping > 6:
                     logging.info("Removing slave %s due to timeout ..." % (name))
                     del self.slaves[name]
                     self.nameserver.remove(name=name)
