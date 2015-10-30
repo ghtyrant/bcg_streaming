@@ -201,17 +201,18 @@ class StreamSlaveControl:
 
     def display_image(self, image_url, stop_stream=True):
         if stop_stream:
-            self.stop_stream()
+            self.stop_stream(False)
 
         display_image(image_url)
 
-    def stop_stream(self):
+    def stop_stream(self, set_background=True):
         if self.stream_player_pipe:
             self.stream_player_pipe.send("stop")
             self.stream_player_pipe.close()
             self.stream_player_pipe = None
 
-        display_image("%s/background.png" % (self.http_base_url))
+        if set_background:
+            display_image("%s/background.png" % (self.http_base_url))
 
     def get_screenshot(self):
         if running_on_pi():
