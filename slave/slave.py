@@ -48,8 +48,12 @@ if running_on_pi():
 
         p.wait()
 
-    def display_image(path):
-        subprocess.call(["fbi", "-oneshot", "-T", "1", "-a", "-noverbose", path])
+    def display_image(path, fixed=False):
+        opts = ["/usr/bin/fbi", "-T", "1", "-a", "-noverbose"]
+        if fixed:
+            opts = opts + ["-oneshot",]
+
+        subprocess.call(opts + [path,])
 
 else:
     def bytes_to_str(b):
@@ -157,7 +161,7 @@ class StreamSlaveControl:
         self.last_ping = time.time()
         self.http_base_url = http_base_url
 
-        display_image("%s/background.png" % (self.http_base_url))
+        display_image("%s/background.png" % (self.http_base_url), fixed=True)
 
     @property
     def name(self):
@@ -200,9 +204,6 @@ class StreamSlaveControl:
             self.stream_player_pipe.send("stop")
             self.stream_player_pipe.close()
             self.stream_player_pipe = None
-
-            time.sleep(1)
-            display_image("%s/background.png" % (self.http_base_url))
 
     def get_screenshot(self):
         if running_on_pi():
