@@ -42,7 +42,7 @@ app.controller('SlaveListCtrl', function($scope, $timeout, slaveService) {
     $timeout(function() {
       $scope.getSlaves();
       $scope.intervalFunction();
-    }, 5000)
+    }, 2000)
   };
 
   $scope.getSlaves();

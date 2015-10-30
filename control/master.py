@@ -95,7 +95,7 @@ if __name__ == "__main__":
     from geventwebsocket.handler import WebSocketHandler
 
     Pyro4.config.COMPRESSION = True
-    Pyro4.config.COMMTIMEOUT = 2.0
+    Pyro4.config.COMMTIMEOUT = 5.0
     Pyro4.config.SOCK_REUSE = True
 
     logger = logging.getLogger()

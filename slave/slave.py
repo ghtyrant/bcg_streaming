@@ -47,6 +47,8 @@ if running_on_pi():
             p.kill()
 
         p.wait()
+        subprocess.call(["/usr/bin/fbset", "-depth", "8"])
+        subprocess.call(["/usr/bin/fbset", "-depth", "16"])
 
     def display_image(path, fixed=False):
         opts = ["/usr/bin/fbi", "-T", "1", "-a", "-noverbose"]

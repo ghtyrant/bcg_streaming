@@ -33,6 +33,7 @@ class SlaveManager:
     def __init__(self, base_url, base_dir):
         self.nameserver = Pyro4.locateNS()
         self.slaves = {}
+        self.slaves_lock = threading.Lock()
 
         self.set_status(SlaveManager.STATUS_OFFLINE, "Starting up ...")
 
@@ -58,7 +59,9 @@ class SlaveManager:
 
     def thread_update_slaves(self):
         while not self.stopped:
+            self.slaves_lock.acquire()
             self.update_slaves()
+            self.slaves_lock.release()
             traffic = psutil.net_io_counters()
             self.set_traffic(traffic.bytes_sent, traffic.bytes_recv)
 

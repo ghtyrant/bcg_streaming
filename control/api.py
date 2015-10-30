@@ -11,6 +11,7 @@ apiApp.log_client_mutex = None
 def get_slaves():
     slave_data = []
 
+    apiApp.slavemanager.slaves_lock.acquire()
     for name, slave in apiApp.slavemanager.slaves.items():
         try:
             status = slave.get_status()
@@ -28,6 +29,8 @@ def get_slaves():
         }
 
         slave_data.append(slave_status)
+
+    apiApp.slavemanager.slaves_lock.release()
 
     return json.dumps(slave_data)
 
@@ -58,6 +61,7 @@ def start_stream():
     if not url:
         return { 'message': 'Empty URL or no stream selected!' }
 
+    apiApp.slavemanager.slaves_lock.acquire()
     if slave_name == '*':
         slaves = apiApp.slavemanager.get_all_slaves()
     else:
@@ -70,12 +74,16 @@ def start_stream():
         except Pyro4.errors.CommunicationError as ex:
             continue
 
+    apiApp.slavemanager.slaves_lock.release()
+
+
     return { 'message': 'Starting stream!' }
 
 @apiApp.post('/stop-stream')
 def stop_stream():
     slave_name = bottle.request.json['slave']
 
+    apiApp.slavemanager.slaves_lock.acquire()
     if slave_name == '*':
         slaves = apiApp.slavemanager.get_all_slaves()
     else:
@@ -88,6 +96,8 @@ def stop_stream():
         except Pyro4.errors.CommunicationError as ex:
             continue
 
+    apiApp.slavemanager.slaves_lock.release()
+
     return { 'message': 'Stopping streams!' }
 
 @apiApp.post('/display-image')
@@ -95,6 +105,7 @@ def display_image():
     url = bottle.request.json['url']
     slave_name = bottle.request.json['slave']
 
+    apiApp.slavemanager.slaves_lock.acquire()
     if slave_name == '*':
         slaves = apiApp.slavemanager.get_all_slaves()
     else:
@@ -102,6 +113,7 @@ def display_image():
 
     for slave in slaves:
         slave.display_image(url)
+    apiApp.slavemanager.slaves_lock.release()
 
     return { 'message': 'Displaying image!' }
 
@@ -123,6 +135,7 @@ def hide_image():
 def reboot():
     slave_name = bottle.request.json['slave']
 
+    apiApp.slavemanager.slaves_lock.acquire()
     if slave_name == '*':
         slaves = apiApp.slavemanager.get_all_slaves()
     else:
@@ -130,5 +143,7 @@ def reboot():
 
     for slave in slaves:
         slave.reboot()
+
+    apiApp.slavemanager.slaves_lock.release()
 
     return { 'message': 'Rebooting!' }
