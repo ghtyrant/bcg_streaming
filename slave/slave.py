@@ -8,6 +8,7 @@ import ctypes
 import logging
 import os
 import hashlib
+from functools import partial
 
 def running_on_pi():
     return os.uname()[4].startswith("arm")
@@ -282,12 +283,12 @@ if __name__ == "__main__":
     ns.register(name, uri)
 
     print("Done! Starting event loop ...")
-    def pingTimeout():
+    def pingTimeout(sc):
         return time.time() - sc.last_ping <= 10
 
     while True:
         try:
-            daemon.requestLoop(loopCondition=pingTimeout)
+            daemon.requestLoop(loopCondition=partial(pingTimeout, sc))
             ns.remove(name=name)
             time.sleep(2)
             sc.last_ping = time.time()
