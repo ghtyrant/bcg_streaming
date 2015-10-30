@@ -283,13 +283,14 @@ if __name__ == "__main__":
 
     print("Done! Starting event loop ...")
     def pingTimeout():
-        return time.time() - sc.last_ping <= 6
+        return time.time() - sc.last_ping <= 10
 
     while True:
         try:
             daemon.requestLoop(loopCondition=pingTimeout)
             ns.remove(name=name)
             time.sleep(2)
+            sc.last_ping = time.time()
             ns.register(name, uri)
         except KeyboardInterrupt:
             break
